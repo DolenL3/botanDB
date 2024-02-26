@@ -9,10 +9,13 @@ import (
 
 const DefaultGCFrequency = 10 * time.Minute
 const DefaultTTL = 24 * time.Hour
+const DefaultShards = 10
 
 var (
 	// ErrKeyNotFound is returned, when prompted key either does not exist in db, or expired.
 	ErrKeyNotFound = errors.Errorf("key not found")
+	// ErrTypeConverted  is returned, when value cannot be converted to required type.
+	ErrTypeConverted = errors.Errorf("value cannot be converted to required type")
 )
 
 // BotanDB is a struct, that implements an inmemory database service.
@@ -21,7 +24,11 @@ type BotanDB struct {
 }
 
 // NewClient returns new client to interract with BotanDB.
+// If shardsAmount is set to zero, it would be set to default value.
 func NewClient(shardsAmount int, gcFrequency time.Duration) *BotanDB {
+	if shardsAmount == 0 {
+		shardsAmount = DefaultShards
+	}
 	botanClient := &BotanDB{
 		shards: make([]*Shard, shardsAmount),
 	}
@@ -40,7 +47,7 @@ func NewClient(shardsAmount int, gcFrequency time.Duration) *BotanDB {
 
 // Set saves a key-value pair in botanDB.
 // If expiration is set to zero, it would be set to default value.
-func (b *BotanDB) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) {
+func (b *BotanDB) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	shard := b.findShard(key)
 	if ttl == 0 {
 		ttl = DefaultTTL
@@ -53,6 +60,7 @@ func (b *BotanDB) Set(ctx context.Context, key string, value interface{}, ttl ti
 		Expiration: time.Now().Add(ttl),
 	}
 	shard.data[key] = entry
+	return nil
 }
 
 // Get retrieves a value by given key from botanDB.

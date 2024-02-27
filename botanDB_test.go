@@ -17,7 +17,7 @@ func TestGet(t *testing.T) {
 	testValue := "bar"
 
 	t.Run("Existing key", func(t *testing.T) {
-		err := clientBotan.Set(ctx, testKey, testValue, 0)
+		err := clientBotan.Set(ctxBotan, testKey, testValue, 0)
 		assert.Nil(t, err)
 
 		val, err := clientBotan.Get(ctxBotan, testKey)
